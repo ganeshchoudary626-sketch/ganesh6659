@@ -1,0 +1,489 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Play, Bug, BookOpen, Lightbulb, CheckCircle, AlertCircle, Code, Zap, Users, Target, Trophy, ArrowRight } from 'lucide-react';
+
+const CodeLearningPlatform = () => {
+  const [activeTab, setActiveTab] = useState('editor');
+  const [code, setCode] = useState(`def fibonacci(n):
+    if n <= 1:
+        return n
+    return fibonacci(n-1) + fibonacci(n-2)
+
+# Test the function
+print(fibonacci(10))`);
+  const [output, setOutput] = useState('');
+  const [errors, setErrors] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [currentExercise, setCurrentExercise] = useState(0);
+  const [tutorialStep, setTutorialStep] = useState(0);
+  const [difficulty, setDifficulty] = useState('beginner');
+  const [showAnalysis, setShowAnalysis] = useState(false);
+
+  const exercises = {
+    beginner: [
+      {
+        title: "Hello World",
+        description: "Create a program that prints 'Hello, World!'",
+        starter: "# Write your code here\n",
+        solution: "print('Hello, World!')",
+        hint: "Use the print() function"
+      },
+      {
+        title: "Variables and Math",
+        description: "Create variables for two numbers and print their sum",
+        starter: "# Create two variables and add them\n",
+        solution: "a = 5\nb = 10\nprint(a + b)",
+        hint: "Remember to assign values to variables using ="
+      }
+    ],
+    intermediate: [
+      {
+        title: "Function Creation",
+        description: "Write a function that calculates the area of a rectangle",
+        starter: "def calculate_area(length, width):\n    # Your code here\n    pass\n",
+        solution: "def calculate_area(length, width):\n    return length * width\n\nprint(calculate_area(5, 3))",
+        hint: "Use the return statement to send back the result"
+      },
+      {
+        title: "List Processing",
+        description: "Create a function that finds the maximum number in a list",
+        starter: "def find_max(numbers):\n    # Your code here\n    pass\n\nnumbers = [3, 7, 2, 9, 1]\n",
+        solution: "def find_max(numbers):\n    return max(numbers)\n\nnumbers = [3, 7, 2, 9, 1]\nprint(find_max(numbers))",
+        hint: "You can use the built-in max() function or write a loop"
+      }
+    ],
+    advanced: [
+      {
+        title: "Class Design",
+        description: "Create a BankAccount class with deposit and withdraw methods",
+        starter: "class BankAccount:\n    def _init_(self, initial_balance=0):\n        # Your code here\n        pass\n",
+        solution: "class BankAccount:\n    def _init_(self, initial_balance=0):\n        self.balance = initial_balance\n    \n    def deposit(self, amount):\n        self.balance += amount\n    \n    def withdraw(self, amount):\n        if amount <= self.balance:\n            self.balance -= amount\n        else:\n            print('Insufficient funds')",
+        hint: "Remember to use self to refer to instance variables"
+      }
+    ]
+  };
+
+  const tutorialSteps = [
+    {
+      title: "Welcome to Code Learning Platform",
+      content: "This platform will help you learn programming through interactive exercises, automated debugging, and step-by-step tutorials.",
+      action: "Get Started"
+    },
+    {
+      title: "Code Editor",
+      content: "Write your code in the editor. The platform will analyze your code in real-time and provide feedback.",
+      action: "Try Writing Code"
+    },
+    {
+      title: "Error Detection",
+      content: "When you make mistakes, the AI will detect errors and provide helpful suggestions to fix them.",
+      action: "Learn About Debugging"
+    },
+    {
+      title: "Practice Exercises",
+      content: "Choose from beginner, intermediate, or advanced exercises to practice your skills.",
+      action: "Start Practicing"
+    }
+  ];
+
+  const analyzeCode = (codeText) => {
+    const analysis = {
+      complexity: 'Medium',
+      suggestions: [],
+      errors: [],
+      explanation: ''
+    };
+
+    // Simulate code analysis
+    if (codeText.includes('def ')) {
+      analysis.explanation = 'This code defines a function. Functions are reusable blocks of code that perform specific tasks.';
+    }
+    
+    if (codeText.includes('fibonacci')) {
+      analysis.suggestions.push('Consider using memoization to optimize recursive fibonacci calculation');
+      analysis.complexity = 'High';
+      analysis.explanation = 'This is a recursive fibonacci implementation. Recursion is when a function calls itself.';
+    }
+
+    if (codeText.includes('print(')) {
+      analysis.suggestions.push('Good use of print statements for output');
+    }
+
+    // Check for common errors
+    if (codeText.includes('Print(')) {
+      analysis.errors.push({
+        line: 1,
+        message: 'Python is case-sensitive. Use "print()" not "Print()"',
+        type: 'SyntaxError'
+      });
+    }
+
+    return analysis;
+  };
+
+  const runCode = () => {
+    const analysis = analyzeCode(code);
+    setErrors(analysis.errors);
+    setSuggestions(analysis.suggestions);
+    
+    if (analysis.errors.length === 0) {
+      setOutput('Code executed successfully!\nFibonacci(10) = 55');
+    } else {
+      setOutput('Code contains errors. Please fix them first.');
+    }
+  };
+
+  const loadExercise = (exerciseIndex) => {
+    const exercise = exercises[difficulty][exerciseIndex];
+    if (exercise) {
+      setCode(exercise.starter);
+      setCurrentExercise(exerciseIndex);
+      setOutput('');
+      setErrors([]);
+      setSuggestions([]);
+    }
+  };
+
+  const nextTutorialStep = () => {
+    if (tutorialStep < tutorialSteps.length - 1) {
+      setTutorialStep(tutorialStep + 1);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-blue-500 rounded-lg">
+                <Code className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-800">AI Code Learning Platform</h1>
+                <p className="text-gray-600">Master programming with intelligent assistance</p>
+              </div>
+            </div>
+            <div className="flex space-x-2">
+              <div className="flex items-center space-x-2 bg-green-100 px-4 py-2 rounded-lg">
+                <Trophy className="h-5 w-5 text-green-600" />
+                <span className="font-medium text-green-700">Level 5</span>
+              </div>
+              <div className="flex items-center space-x-2 bg-blue-100 px-4 py-2 rounded-lg">
+                <Target className="h-5 w-5 text-blue-600" />
+                <span className="font-medium text-blue-700">12 Completed</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Tabs */}
+        <div className="bg-white rounded-xl shadow-lg mb-6">
+          <div className="flex border-b">
+            {[
+              { id: 'editor', label: 'Code Editor', icon: Code },
+              { id: 'exercises', label: 'Practice Exercises', icon: Target },
+              { id: 'tutorial', label: 'Interactive Tutorial', icon: BookOpen },
+              { id: 'debug', label: 'Debug Assistant', icon: Bug }
+            ].map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={`flex items-center space-x-2 px-6 py-4 font-medium transition-colors ${
+                  activeTab === id
+                    ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                    : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Code Editor */}
+          {activeTab === 'editor' && (
+            <>
+              <div className="lg:col-span-2 bg-white rounded-xl shadow-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-800">Code Editor</h2>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={runCode}
+                      className="flex items-center space-x-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                      <Play className="h-4 w-4" />
+                      <span>Run Code</span>
+                    </button>
+                    <button
+                      onClick={() => setShowAnalysis(!showAnalysis)}
+                      className="flex items-center space-x-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                      <Lightbulb className="h-4 w-4" />
+                      <span>Analyze</span>
+                    </button>
+                  </div>
+                </div>
+                
+                <textarea
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  className="w-full h-64 p-4 border rounded-lg font-mono text-sm bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Write your code here..."
+                />
+                
+                {output && (
+                  <div className="mt-4 p-4 bg-gray-900 text-green-400 rounded-lg font-mono text-sm">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="font-medium">Output:</span>
+                    </div>
+                    <pre>{output}</pre>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-6">
+                {/* Code Analysis */}
+                {showAnalysis && (
+                  <div className="bg-white rounded-xl shadow-lg p-6">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
+                      <Zap className="h-5 w-5 text-yellow-500" />
+                      <span>Code Analysis</span>
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="p-3 bg-blue-50 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          This code defines a recursive function to calculate Fibonacci numbers. 
+                          The function calls itself with smaller values until reaching the base case.
+                        </p>
+                      </div>
+                      <div className="text-sm">
+                        <span className="font-medium text-gray-600">Complexity: </span>
+                        <span className="text-orange-600 font-medium">High (O(2^n))</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error Detection */}
+                {errors.length > 0 && (
+                  <div className="bg-white rounded-xl shadow-lg p-6">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
+                      <AlertCircle className="h-5 w-5 text-red-500" />
+                      <span>Errors Detected</span>
+                    </h3>
+                    <div className="space-y-2">
+                      {errors.map((error, index) => (
+                        <div key={index} className="p-3 bg-red-50 border-l-4 border-red-400 rounded">
+                          <p className="text-sm text-red-800">
+                            <span className="font-medium">Line {error.line}:</span> {error.message}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Suggestions */}
+                {suggestions.length > 0 && (
+                  <div className="bg-white rounded-xl shadow-lg p-6">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
+                      <Lightbulb className="h-5 w-5 text-yellow-500" />
+                      <span>AI Suggestions</span>
+                    </h3>
+                    <div className="space-y-2">
+                      {suggestions.map((suggestion, index) => (
+                        <div key={index} className="p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+                          <p className="text-sm text-yellow-800">{suggestion}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Practice Exercises */}
+          {activeTab === 'exercises' && (
+            <div className="lg:col-span-3">
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-gray-800">Practice Exercises</h2>
+                  <div className="flex space-x-2">
+                    {['beginner', 'intermediate', 'advanced'].map((level) => (
+                      <button
+                        key={level}
+                        onClick={() => setDifficulty(level)}
+                        className={`px-4 py-2 rounded-lg capitalize font-medium transition-colors ${
+                          difficulty === level
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {level}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {exercises[difficulty].map((exercise, index) => (
+                    <div
+                      key={index}
+                      className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => {
+                        loadExercise(index);
+                        setActiveTab('editor');
+                      }}
+                    >
+                      <h3 className="font-semibold text-gray-800 mb-2">{exercise.title}</h3>
+                      <p className="text-sm text-gray-600 mb-3">{exercise.description}</p>
+                      <div className="flex items-center justify-between">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          difficulty === 'beginner' ? 'bg-green-100 text-green-700' :
+                          difficulty === 'intermediate' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {difficulty}
+                        </span>
+                        <ArrowRight className="h-4 w-4 text-gray-400" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Interactive Tutorial */}
+          {activeTab === 'tutorial' && (
+            <div className="lg:col-span-3">
+              <div className="bg-white rounded-xl shadow-lg p-8">
+                <div className="max-w-2xl mx-auto text-center">
+                  <div className="mb-6">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <BookOpen className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                      {tutorialSteps[tutorialStep].title}
+                    </h2>
+                    <p className="text-gray-600 text-lg leading-relaxed">
+                      {tutorialSteps[tutorialStep].content}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-center mb-6">
+                    <div className="flex space-x-2">
+                      {tutorialSteps.map((_, index) => (
+                        <div
+                          key={index}
+                          className={`w-3 h-3 rounded-full ${
+                            index === tutorialStep ? 'bg-blue-500' : 'bg-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={nextTutorialStep}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2 mx-auto"
+                    disabled={tutorialStep >= tutorialSteps.length - 1}
+                  >
+                    <span>{tutorialSteps[tutorialStep].action}</span>
+                    {tutorialStep < tutorialSteps.length - 1 && <ArrowRight className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Debug Assistant */}
+          {activeTab === 'debug' && (
+            <div className="lg:col-span-3">
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center space-x-2">
+                  <Bug className="h-6 w-6 text-red-500" />
+                  <span>AI Debug Assistant</span>
+                </h2>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold text-gray-800 mb-3">Common Issues & Solutions</h3>
+                    <div className="space-y-3">
+                      {[
+                        {
+                          issue: "IndentationError",
+                          solution: "Python uses indentation to define code blocks. Make sure your indentation is consistent.",
+                          example: "Use 4 spaces or 1 tab consistently"
+                        },
+                        {
+                          issue: "NameError",
+                          solution: "This occurs when you try to use a variable that hasn't been defined.",
+                          example: "Make sure to define variables before using them"
+                        },
+                        {
+                          issue: "SyntaxError", 
+                          solution: "Check for missing colons, parentheses, or quotes.",
+                          example: "if x > 5: (don't forget the colon)"
+                        }
+                      ].map((item, index) => (
+                        <div key={index} className="p-4 border rounded-lg">
+                          <h4 className="font-medium text-red-600 mb-2">{item.issue}</h4>
+                          <p className="text-sm text-gray-600 mb-2">{item.solution}</p>
+                          <p className="text-xs text-gray-500 italic">{item.example}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold text-gray-800 mb-3">AI Debug Chat</h3>
+                    <div className="p-4 border rounded-lg bg-gray-50 h-64 mb-4 overflow-y-auto">
+                      <div className="space-y-3">
+                        <div className="bg-blue-100 p-3 rounded-lg">
+                          <p className="text-sm text-blue-800">
+                            <strong>AI Assistant:</strong> I'm here to help you debug your code! 
+                            Paste your error message or describe the issue you're facing.
+                          </p>
+                        </div>
+                        <div className="bg-white p-3 rounded-lg border">
+                          <p className="text-sm text-gray-600">
+                            <strong>You:</strong> My code isn't working...
+                          </p>
+                        </div>
+                        <div className="bg-blue-100 p-3 rounded-lg">
+                          <p className="text-sm text-blue-800">
+                            <strong>AI Assistant:</strong> I'd be happy to help! Can you share 
+                            the specific error message you're seeing?
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        placeholder="Describe your issue or paste error message..."
+                        className="flex-1 px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                      <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
+                        Send
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CodeLearningPlatform;
